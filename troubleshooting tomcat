@@ -1,0 +1,35 @@
+TROUBLESHOOTING
+
+
+ON THE SLAVE SERVER WHERE TOMCAT IS INSTALLED 
+
+
+# Check if Tomcat is listening locally
+
+netstat -tunlp | grep 8080
+
+# Check if the Manager app is responding (Should return 401 Unauthorized)
+
+curl -I http://localhost:8080/manager/html
+
+
+
+
+2.
+
+The AWS Firewall Check
+If curl localhost:8080 works but you can't see the app in your browser:
+	• Action: Go to EC2 Security Groups and add Inbound Rule for Port 8080 from 0.0.0.0/0.
+
+
+
+
+3.
+
+
+The Restart Protocol
+If you change context.xml or tomcat-users.xml, Tomcat must be restarted manually if it isn't a systemd service:
+Bash
+
+/opt/tomcat/bin/shutdown.sh
+/opt/tomcat/bin/startup.sh
