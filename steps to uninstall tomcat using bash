@@ -1,0 +1,43 @@
+Steps to uninstall tomcat
+
+
+Working perfect
+
+🧹 Create Tomcat uninstall script
+1️⃣ Create the file
+sudo vim uninstall_tomcat.sh
+Press i to enter insert mode, then paste everything below.
+
+📄 Paste this script
+#!/bin/bash
+echo "Stopping Tomcat if running..."
+sudo -u tomcat /opt/tomcat/bin/shutdown.sh 2>/dev/null
+echo "Killing any remaining Tomcat/Java processes..."
+sudo pkill -f tomcat 2>/dev/null
+echo "Checking if port 8080 is still in use..."
+ss -tulpn | grep 8080 || echo "Port 8080 is free"
+echo "Removing Tomcat user..."
+sudo userdel -r tomcat 2>/dev/null
+echo "Deleting Tomcat installation directory..."
+sudo rm -rf /opt/tomcat
+echo "Removing downloaded Tomcat archives..."
+sudo rm -f /opt/apache-tomcat-*.tar.gz
+echo "Removing Tomcat systemd service if it exists..."
+sudo rm -f /etc/systemd/system/tomcat.service
+echo "Reloading systemd daemon..."
+sudo systemctl daemon-reload
+echo "Verifying removal..."
+ls /opt
+id tomcat 2>/dev/null || echo "Tomcat user removed"
+echo "✅ Tomcat has been completely removed from this server."
+
+2️⃣ Save the file
+Press:
+ESC → :wq → Enter
+
+
+3️⃣ Make the script executable
+chmod +x uninstall_tomcat.sh
+
+4️⃣ Run the script
+./uninstall_tomcat.sh
