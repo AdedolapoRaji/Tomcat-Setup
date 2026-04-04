@@ -1,0 +1,81 @@
+Deployment 
+
+
+
+Pipeline that finally worked 
+
+
+pipeline {
+    agent { label 'slave1' }
+
+    environment {
+        // Credential ID for Tomcat
+        TOMCAT_CREDS_ID = '35b9b3a0-90c7-4119-adbc-4b026f57e625'
+        
+        // Since Tomcat is on the SAME machine as the Slave1, we use localhost
+        TOMCAT_URL      = 'http://localhost:8080/'
+        
+        // SonarQube Details
+        SONAR_PROJECT_KEY = 'javapro'
+        SONAR_URL         = 'http://13.50.13.82:9000'
+        SONAR_LOGIN_TOKEN = 'f1689ee7f23ce4781f1b49f3257ef27ccc2611a1'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'master', url: 'https://github.com/AdedolapoRaji/jenkins-java-projects.git'
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                sh 'mvn clean verify'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                sh """
+                    mvn sonar:sonar \
+                    -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                    -Dsonar.host.url=${SONAR_URL} \
+                    -Dsonar.login=${SONAR_LOGIN_TOKEN}
+                """
+            }
+        }
+
+        stage('Package & Deploy') {
+            steps {
+                // 1. Create the WAR file
+                sh 'mvn package -DskipTests'
+                
+                // 2. Save the artifact in Jenkins
+                archiveArtifacts artifacts: 'target/*.war', fingerprint: true
+                
+                // 3. Deploy to Tomcat
+                deploy adapters: [
+                    tomcat9(
+                        credentialsId: "${TOMCAT_CREDS_ID}",
+                        url: "${TOMCAT_URL}",
+                        update: true // This is the fix: it must stay inside tomcat9()
+                    )
+                ], 
+                contextPath: 'netflix-app', 
+                war: 'target/*.war'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Success! App live at: http://13.53.212.155:8080/netflix-app"
+        }
+        failure {
+            echo '❌ Pipeline failed. Check the syntax or Tomcat credentials.'
+        }
+        always {
+            cleanWs()
+        }
+    }
+}
