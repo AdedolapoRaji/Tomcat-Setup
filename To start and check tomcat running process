@@ -1,0 +1,27 @@
+To start and check tomcat running process
+
+✅ If you mean: "Can I still use terminal while Tomcat is running?"
+
+sudo -u tomcat /opt/tomcat/bin/startup.sh
+
+It runs in the background.
+
+You can still:
+	• Run commands
+	• Edit files
+	• SSH normally
+	• Install packages
+To confirm it's running:
+ss -tulpn | grep 8080
+or
+ps aux | grep tomcat
+
+✅ If you mean: "How do I monitor Tomcat while it's running?"
+
+You can watch logs live:
+tail -f /opt/tomcat/logs/catalina.out
+
+That shows real-time activity.
+Press:
+CTRL + C
+to stop watching.
