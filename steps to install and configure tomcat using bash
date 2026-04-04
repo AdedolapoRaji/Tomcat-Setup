@@ -1,0 +1,164 @@
+WORKING STEPS TO CONFIGURE AND INSTALL TOMCAT9(GOOGLE GEMINI)
+
+THE TOMCAT CONFIG I LATER USED WHICH WORKED PERFECTLY 
+
+SCRIPT 2 UNDERNEATH HAS ALL THE ANOMALIES CORRECTED
+
+	1. Automated Tomcat 9 Setup Script
+Bash
+
+#!/bin/bash
+# 1. Clean up any existing Tomcat installation
+sudo systemctl stop tomcat 2>/dev/null
+sudo rm -rf /opt/tomcat
+# 2. Update System and Install Java 11 (Required for Tomcat 9)
+sudo dnf update -y
+sudo dnf install java-11-amazon-corretto-devel -y
+# 3. Create Tomcat Directory and Download Tomcat 9.0.87
+sudo mkdir -p /opt/tomcat
+cd /tmp
+wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.87/bin/apache-tomcat-9.0.87.tar.gz
+sudo tar -xf apache-tomcat-9.0.87.tar.gz -C /opt/tomcat --strip-components=1
+# 4. Set Permissions for ec2-user
+cd /opt/tomcat
+sudo chown -R ec2-user:ec2-user /opt/tomcat
+sudo chmod -R 755 /opt/tomcat/bin
+sudo chmod -R 755 /opt/tomcat/conf
+# 5. CONFIGURATION: Update tomcat-users.xml
+# This injects the required roles and your specific password
+sudo sed -i '/<\/tomcat-users>/i \
+  <role rolename="manager-gui"/> \
+  <role rolename="manager-script"/> \
+  <role rolename="admin-gui"/> \
+  <role rolename="admin-script"/> \
+  <user username="tomcat" password="Tobyte#$6" roles="manager-gui,manager-script,admin-gui,admin-script"/>' /opt/tomcat/conf/tomcat-users.xml
+# 6. CONFIGURATION: Disable Remote Access Restrictions
+# This comments out the IP Valve that was causing your 403 error
+sudo sed -i 's/<Valve //g' /opt/tomcat/webapps/manager/META-INF/context.xml
+sudo sed -i 's/<Valve //g' /opt/tomcat/webapps/host-manager/META-INF/context.xml
+# 7. Start Tomcat
+sudo /opt/tomcat/bin/startup.sh
+echo "------------------------------------------------------------"
+echo "✅ Tomcat 9 Clean Installation & Configuration Complete!"
+echo "URL: http://$(curl -s http://checkip.amazonaws.com):8080"
+echo "Username: tomcat"
+echo "Password: Tobyte#$6"
+echo "------------------------------------------------------------"
+
+Instructions to Execute:
+
+	1. Create the script file:
+Bash
+
+vim install_tomcat.sh
+
+	2. Paste the content: Press i, paste the code above, then press Esc, type :wq, and hit Enter.
+	3. Run the script:
+Bash
+
+chmod +x install_tomcat.sh
+./install_tomcat.sh
+
+Final Step for Jenkins:
+Since you changed the password to Tobyte#$6, you must update your Jenkins credentials.
+	• Go to Manage Jenkins > Credentials.
+	• Find the ID dcc980ae-eb00-4be2-883c-8a88759a9eca (as seen in your screenshots).
+	• Click the wrench icon (Edit) and update the password to Tobyte#$6.
+	• Save and re-run your pipeline.
+This will resolve the 403 Access Denied error shown in your last build logs!
+
+
+
+
+		2. THE BASH SCRIPT RECOMMENDED FOR TOMCAT CONFIGURATION AND INSTALLATION AFTER SEVERAL TROUBLESHOOTING BELOW
+
+
+
+#!/bin/bash
+# ------------------------------------------------------------------
+# Automated Tomcat 9 Installation & Security Fix Script
+# Target: Amazon Linux 2 / RHEL / CentOS
+# ------------------------------------------------------------------
+
+# 1. Install Java 11 (Required for your Maven project)
+echo "Installing Java 11..."
+sudo yum install java-11-amazon-corretto -y
+
+# 2. Download and Extract Tomcat 9
+echo "Downloading Tomcat 9.0.75..."
+cd /opt
+sudo wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.75/bin/apache-tomcat-9.0.75.tar.gz
+sudo tar -xvzf apache-tomcat-9.0.75.tar.gz
+sudo mv apache-tomcat-9.0.75 tomcat
+sudo chmod -R 755 /opt/tomcat
+
+# 3. FIX: Disable the Remote Address Valve
+# This removes the block that causes the 'Connection Timed Out' or '403 Forbidden' 
+# when Jenkins tries to deploy to the Manager App.
+echo "Applying Remote Address Valve Fix..."
+sudo cat <<'EOF' > /opt/tomcat/webapps/manager/META-INF/context.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Context antiResourceLocking="false" privileged="true" >
+  <CookieProcessor className="org.apache.tomcat.util.http.Rfc6265CookieProcessor"
+                   sameSiteCookies="strict" />
+  <Manager sessionAttributeValueClassNameFilter="java\.lang\.(?:Boolean|Integer|Long|Number|String)|org\.apache\.catalina\.filters\.CsrfPreventionFilter$Lru" />
+</Context>
+EOF
+
+# 4. FIX: Configure Users & Roles
+# Setting up your specific credentials: tomcat / Tobyte#$63
+echo "Configuring Tomcat Users and Roles..."
+sudo cat <<EOF > /opt/tomcat/conf/tomcat-users.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<tomcat-users xmlns="http://tomcat.apache.org/xml" version="1.0">
+  <role rolename="manager-gui"/>
+  <role rolename="manager-script"/>
+  <role rolename="admin-gui"/>
+  <user username="tomcat" password="Tobyte#$6" roles="manager-gui,manager-script,admin-gui"/>
+</tomcat-users>
+EOF
+
+# 5. Start Tomcat Service
+echo "Starting Tomcat..."
+/opt/tomcat/bin/startup.sh
+
+echo "--------------------------------------------------------"
+echo "INSTALLATION COMPLETE"
+echo "Tomcat is running on port 8080"
+echo "Credentials: tomcat / Tobyte#$6"
+echo "--------------------------------------------------------"
+
+
+
+Instructions to Execute:
+	1. Create the script file:
+Bash
+
+vim install_tomcat.sh
+	2. Paste the content: Press i, paste the code above, then press Esc, type :wq, and hit Enter.
+	3. Run the script:
+Bash
+
+chmod +x install_tomcat.sh
+./install_tomcat.sh
+
+Final Step for Jenkins:
+Since you changed the password to Tobyte#$63, you must update your Jenkins credentials.
+	• Go to Manage Jenkins > Credentials.
+	• Find the ID dcc980ae-eb00-4be2-883c-8a88759a9eca (as seen in your screenshots).
+	• Click the wrench icon (Edit) and update the password to Tobyte#$6.
+	• Save and re-run your pipeline.
+This will resolve the 403 Access Denied error shown in your last build logs!
+
+
+
+
+
+
+
+WHY THE SECOND SCRIPT.
+
+By running this script, you are bake-in the solutions to the three main reasons Tomcat installations usually fail in a CI/CD pipeline:
+	1. The "Remote Address Valve" Fix: Your script explicitly overwrites the context.xml with a version that has the restriction removed. No more 3-minute hangs.
+	2. The Role Fix: It explicitly adds the manager-script role, which is the "key" Jenkins needs to talk to Tomcat via API.
+The XML Integrity Fix: By using the cat <<'EOF' method, it ensures that special characters (like the $ in the Manager tag) are preserved exactly as Tomcat needs them, preventing the "Unit not found" or "Manager app crashed" errors.
