@@ -1,0 +1,74 @@
+Day 20 Project Deployment
+
+
+	1. Spin up slave 1 server.
+	2. Install Tomcat using the script wget http://dlcdn.apache.org/tomcat/tomcat-9/v9.0.80/bin/apache-tomcat-9.0.80.tar.gz
+	3. Untar the file tar -zxvf apache-tomcat-9.0.80.tar.gz
+	4. CREATE A USER TO SIGN INTO TOMCAT Vim apache-tomcat-9.0.80/conf/tomcat-users.xml
+		○ Go to the bottom of the file -> shift g
+		○ Place the cursor on the first line copy the first 3 lines -> 3yy
+		○ Paste it underneath -> P
+		○ Modify:
+			§ rolename = "manager-gui"
+			§ rolename = "manager-script"
+			§ username = "tomcat" password = "raham123" roles = "manager-gui, manager-script"
+		○ :wq to save
+	5. Vim apache-tomcat-9.0.80/webapps/manager/META-INF/context.xml
+		○ delete line number 21, 22
+		○ :21 -> d
+		○ :22 -> d
+	6. START TOMCAT sh apache-tomcat-9.0.80/bin/startup.sh TO SIGN INTO TOMCAT & DEPLOY Public IP of slave1:8080 Manager app -> enter username and password to login Download plugin -> manage Jenkins -> plugins -> Available plugins -> Deploy to container: This is to deploy on Tomcat
+
+
+HOW TO CONNECT
+
+Dashboard > manage Jenkins > credentials > system > Global Credentials > Add credentials
+	• Username = tomcat
+	• Password = raham123
+	• Click on Create.
+
+Go to credentials > Copy the ID for tomcat
+	
+
+Complete Pipeline Syntax
+
+This is just a Sample syntax to depict  deployment 
+
+Based on your notes regarding the Netflix app and the deployment steps, here is the corrected Declarative Pipeline script:
+Groovy
+
+pipeline {
+    agent any
+tools {
+        maven 'maven-3' // Ensure this matches your Jenkins Global Tool Configuration name
+    }
+stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/your-repo/netflix-clone.git'
+            }
+        }
+stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+stage('deploy') {
+            steps {
+                deploy adapters: [
+                    tomcat9(
+                        credentialsId: 'PASTE_YOUR_COPIED_ID_HERE',
+                        path: '',
+                        url: 'http://13.39.49.204:8080/'
+                    )
+                ], 
+                contextPath: 'netflix', 
+                war: 'target/*.war'
+            }
+        }
+    }
+}
+
+
+
+The pipeline that worked is in next page
