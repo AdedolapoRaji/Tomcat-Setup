@@ -143,7 +143,7 @@ chmod +x install_tomcat.sh
 ./install_tomcat.sh
 
 Final Step for Jenkins:
-Since you changed the password to Tobyte#$63, you must update your Jenkins credentials.
+Since you changed the password to Tobyte#$6, you must update your Jenkins credentials.
 	• Go to Manage Jenkins > Credentials.
 	• Find the ID dcc980ae-eb00-4be2-883c-8a88759a9eca (as seen in your screenshots).
 	• Click the wrench icon (Edit) and update the password to Tobyte#$6.
